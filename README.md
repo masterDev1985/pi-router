@@ -7,10 +7,14 @@ its eth0 interface and share its internet connection from its WiFi interface.
 This project assumes that you are using a Raspberry Pi 3 with Raspbian installed.  For reference, here are the kernel
 and pi firmware versions that were running on my Pi.
 ```
-gencmd output here
+pi@raspberrypi:~ $ vcgencmd version
+Aug 30 2016 17:02:01 
+Copyright (c) 2012 Broadcom
+version c60d00082957b5072ae3de71484f03f0aec21628 (clean) (release)
 ```
 ```
-uname -a output here
+pi@raspberrypi:~ $ uname -a
+Linux raspberrypi 4.4.17-v7+ #902 SMP Mon Aug 15 12:21:29 BST 2016 armv7l GNU/Linux
 ```
 
 ### DNS and DHCP Configuration
@@ -29,17 +33,30 @@ sudo nano /etc/network/interfaces
 This file should be updated to match the configuration in this project's configuration file.  We basically configure the
 that configures the eth0 interface:
 ```
-put config text here
+auto eth0
+iface eth0 inet static
+address 192.168.4.1
+netmask 255.255.255.0
+network 192.168.4.0
+broadcast 192.168.4.255
+gateway 192.168.4.1
 ```
 Because we want to share the internet connection of the wlan0 interface, we must update that interface's configuration 
 so that it can connect to our wireless network:
 ```
-put config block here
+allow-hotplug wlan0
+iface wlan0 inet dhcp
+  wpa-ssid "Your network name here"
+  wpa-psk "Your passcode here"
+  wpa-group TKIP CCMP
+  wpa-key-mgmt WPA-PSK
+
 ```
 
 There is also a block for configuring the loopback interface that allows the Pi to talk to itself:
 ```
-put config block here
+auto lo
+iface lo inet loopback
 ```
 
 After reconfiguring the network interfaces, the networking service will need to be restarted:
@@ -55,7 +72,21 @@ sudo nano /etc/dnsmasq.conf
 
 Update the contents of the file to match the configuration file in this project:
 ```
-config here
+interface=eth0
+
+# Specify the address range and lease time for DHCP (leave 2-50 for static IPs)
+dhcp-range=192.168.4.51,192.168.4.254,255.255.255.0,12h
+
+# Hand out DNS server information at the same time as IP addresses
+dhcp-option=6,192.168.4.1
+
+# Use a text file for DNS host name storage
+no-hosts  # ignore /etc/hosts
+addn-hosts=/etc/hosts.dnsmasq
+
+# Fallback to Google DNS after checking hosts.dnsmasq
+server=8.8.8.8
+server=8.8.4.4
 ```
 
 This config file specifies that the file `/etc/hosts.dnsmasq` will contain a list of hostnames for the DNS service.  An
@@ -78,7 +109,12 @@ Reboot the network service again.
 ## Finished?
 If everything went smoothly, you should see output similar to the following for the `route` command:
 ```
-route output here
+pi@raspberrypi:~ $ route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         dsldevice.attlo 0.0.0.0         UG    303    0        0 wlan0
+192.168.1.0     *               255.255.255.0   U     303    0        0 wlan0
+192.168.4.0     *               255.255.255.0   U     0      0        0 eth0
 ```
 
 ## References
