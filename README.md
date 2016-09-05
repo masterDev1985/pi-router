@@ -105,9 +105,10 @@ nameserver 127.0.0.1
 
 Reboot the network service again.
 
+`setupiptables.sh` should set up some iptables rules to allow the traffic from the eth0 interface to make its way
+through the wlan0 interface to the internet.  
 
-## Finished?
-If everything went smoothly, you should see output similar to the following for the `route` command:
+You might also need to reconfigure the kernel routes for traffic to flow. You should see output similar to the following for the `route` command:
 ```
 pi@raspberrypi:~ $ route
 Kernel IP routing table
